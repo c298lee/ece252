@@ -14,19 +14,20 @@ int is_png(U8 *buf, size_t n){
 int checkCRC(FILE* fp) {
 	struct chunk *chunk_info = (struct chunk*)malloc(sizeof (struct chunk));
 	fread(&chunk_info->length,sizeof(U32),1,fp);
+	printf("%d\n",ntohl(chunk_info->length));
 	U8 data;
 	for (int i = 0; i < 4; i++) {
 		fread(&data,sizeof(U8),1,fp);
 		chunk_info->type[i] = data;
 	}
-	chunk_info->p_data = (U8 *)malloc(chunk_info->length*sizeof(U8));
-	fread(chunk_info->p_data,1,chunk_info->length,fp);
+	chunk_info->p_data = (U8 *)malloc(ntohl(chunk_info->length)*sizeof(U8));
+	fread(chunk_info->p_data,1,ntohl(chunk_info->length),fp);
 	fread(&chunk_info->crc,sizeof(U32),1,fp);
-	U32 crc_info = crc(chunk_info->p_data,chunk_info->length);
-//   	if (crc_info != ntohl(chunk_info->crc)) {
-//		printf("%c%c%c%c chunk CRC error: computed %x, expected %x \n",chunk_info->type[0],chunk_info->type[1],chunk_info->type[2],chunk_info->type[3],crc_info,ntohl(chunk_info->crc));
-//		return -1;
-//	}
+	U32 crc_info = crc(chunk_info->p_data,ntohl(chunk_info->length));
+   	if (crc_info != ntohl(chunk_info->crc)) {
+		printf("%c%c%c%c chunk CRC error: computed %x, expected %x \n",chunk_info->type[0],chunk_info->type[1],chunk_info->type[2],chunk_info->type[3],crc_info,ntohl(chunk_info->crc));
+		return -1;
+	}
 	free(chunk_info);	
 	return 0;
 }
